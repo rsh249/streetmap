@@ -8,17 +8,6 @@ library(landscapetools)
 library(knor)
 library(RStoolbox)
 
-# bounding latitude and longitude of your study area (think small, or expect long wait times)
-# You may pick these by browsing google maps and right clicking on the map and selecing "What's here?"
-# this will display a lat/long set
-#
-# Pick minimum and maximum lat and long and enter as:
-# lon_min, lon_max, lat_min, lat_max
-lon_min = -75.42
-lon_max = -75.27
-lat_min = 37.83544
-lat_max = 37.97
-ext = extent(c(lon_min, lon_max, lat_min, lat_max)) # EDIT if you are searching for another place
 
 # Get Open Street Map (OSM) Data
 place = 'Chincoteague Virginia' # EDIT if you are searching for another place
@@ -46,6 +35,19 @@ small_streets <- getbb(place)%>%
   osmdata_sf()
 
 ######## END OSM ################
+
+
+
+#define bounding area from streets object
+box = unlist(str_split(streets$bbox, ","))
+box = as.numeric(box)
+lat_min = box[1]
+lon_min = box[2]
+lat_max = box[3]
+lon_max = box[4]
+ext = extent(c(lon_min, lon_max, lat_min, lat_max)) # EDIT if you are searching for another place
+
+
 
 # # Get Landsat8 images for bands 1-4 (or 3-4 for NDVI)
 
@@ -83,11 +85,12 @@ aoi= scene_list %>% filter(min_lon <= lon_min &
 
 download_base = paste('https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/', aoi$path, "/", aoi$row, "/", aoi$productId, "/", aoi$productId, sep='')
 
-get4 = paste( 'wget ', download_base, '_B4.TIF', sep = '')
-get5 = paste( 'wget ', download_base, '_B5.TIF', sep = '')
+get4 = paste( download_base, '_B4.TIF', sep = '')
+get5 = paste( download_base, '_B5.TIF', sep = '')
 
-system(get4)
-system(get5)
+download.file(get4, 'B4.TIF')
+download.file(get5, 'B5.TIF')
+
 
 l8 = raster::stack(list.files(pattern='*TIF', full.names = TRUE))
 
